@@ -1,20 +1,24 @@
-import base64
+import jwt
+import os
+import datetime
 
-# SECURITY ISSUE: Weak token generation
-def generate_token(user_id):
-    # BUG: Simple base64 encoding is not secure
-    token = base64.b64encode(f"{user_id}:{int(time.time())}".encode())
-    return token.decode()
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
+def generate_token(user_id: int) -> str:
+    # FIX: JWT with expiry and signature
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+        "iat": datetime.datetime.utcnow()
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
-def verify_token(token):
-    # CODE QUALITY ISSUE: No expiration check
-    # CODE QUALITY ISSUE: No signature validation
+def verify_token(token: str) -> int:
+    # FIX: Validates signature and expiry, raises on failure
     try:
-        decoded = base64.b64decode(token).decode()
-        user_id = decoded.split(':')[0]
-        return user_id
-    except:
-        return None  # BUG: Returns None instead of raising proper exception
-    
-    
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload["user_id"]
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Token has expired")
+    except jwt.InvalidTokenError:
+        raise ValueError("Invalid token provided")

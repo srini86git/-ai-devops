@@ -3,64 +3,77 @@ import sqlite3
 from flask import Flask, request, jsonify
 from utils.auth import verify_token
 from database.db_handler import execute_query
+from werkzeug.security import check_password_hash
+import jwt, datetime
+from functools import wraps
 
 app = Flask(__name__)
 
-# SECURITY ISSUE: Hardcoded secret key (should be in environment variable)
-SECRET_KEY = "hardcoded-super-secret-key-12345"
+# FIX: Load secret from environment variable
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable not set")
 
-# SECURITY ISSUE: Debug mode enabled in production
-app.config['DEBUG'] = True
+# FIX: Debug disabled â€” set via env only
+app.config['DEBUG'] = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
 
-# INSECURE PASSWORD HANDLING
+# FIX: Rate limiting
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+limiter = Limiter(get_remote_address, app=app, default_limits=["100/hour"])
+
 @app.route('/login', methods=['POST'])
+@limiter.limit("10/minute")
 def login():
-    data = request.get_json()
+    data     = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    
-    # SECURITY ISSUE: Storing/checking plaintext passwords
-    # SECURITY ISSUE: No rate limiting
-    conn = sqlite3.connect('users.db')
+
+    # FIX: Parameterized query + bcrypt password check
+    conn   = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'")
+    cursor.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
     conn.close()
-    
-    if user:
-        return jsonify({"status": "success", "token": SECRET_KEY})
+
+    if user and check_password_hash(user[1], password):
+        token = jwt.encode(
+            {"user_id": user[0], "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
+            SECRET_KEY, algorithm="HS256"
+        )
+        return jsonify({"status": "success", "token": token})
     return jsonify({"status": "failed"}), 401
 
-# SQL INJECTION VULNERABILITY
 @app.route('/user/<username>')
 def get_user(username):
-    conn = sqlite3.connect('users.db')
+    # FIX: Parameterized query â€” no string interpolation
+    conn   = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    # DANGEROUS: String concatenation instead of parameterized query
-    query = f"SELECT * FROM users WHERE username = '{username}'"
-    cursor.execute(query)
+    cursor.execute("SELECT id, username FROM users WHERE username = ?", (username,))
     user = cursor.fetchone()
     conn.close()
     return jsonify(user)
 
-# DEPRECATED/INSECURE FUNCTION USAGE
 @app.route('/data')
 def get_data():
-    import pickle
+    # FIX: Removed pickle entirely â€” use JSON
+    import json
     data = request.args.get('payload')
-    # SECURITY ISSUE: Pickle deserialization from user input
-    return pickle.loads(data.encode())  # RCE vulnerability
+    return jsonify(json.loads(data))
 
-# CODE QUALITY ISSUE: Bare except clause
 @app.route('/admin/delete')
 def delete_user():
     try:
         user_id = request.args.get('id')
-        execute_query(f"DELETE FROM users WHERE id = {user_id}")
-    except:  # BUG: Bare except hides all errors
-        pass
-    
-    return jsonify({"status": "deleted"})
+        # FIX: Parameterized query
+        execute_query("DELETE FROM users WHERE id = ?", (user_id,))
+        return jsonify({"status": "deleted"})
+    except ValueError as e:
+        return jsonify({"error": "Invalid user ID"}), 400
+    except Exception as e:
+        app.logger.error(f"Delete failed: {e}")
+        return jsonify({"error": "Internal error"}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)  # SECURITY ISSUE: Binding to all interfaces
+    # FIX: Bind to localhost only in dev
+    app.run(host='127.0.0.1', port=5000)
