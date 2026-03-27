@@ -1,0 +1,170 @@
+{
+  "scan_timestamp": "2026-03-26T15:40:53.879343",
+  "model": "qwen2.5-coder:0.5b",
+  "repo": "c:\\labs\\ai-devops\\-ai-devops\\sample-python-repo",
+  "files_scanned": 3,
+  "results": [
+    {
+      "file": "app.py",
+      "issues": [
+        {
+          "id": "SAST-001",
+          "severity": "CRITICAL",
+          "category": "SQL Injection",
+          "line_range": "25-34",
+          "description": "The 'username' parameter is directly concatenated into the SQL query, which can lead to SQL injection.",
+          "recommendation": "Use parameterized queries or use a secure hashing library like bcrypt for password storage."
+        },
+        {
+          "id": "SAST-002",
+          "severity": "CRITICAL",
+          "category": "Hardcoded Secret",
+          "line_range": "16-34",
+          "description": "The 'SECRET_KEY' variable is hardcoded and should be in an environment variable.",
+          "recommendation": "Use environment variables or a secure hashing library like bcrypt for password storage."
+        },
+        {
+          "id": "SAST-003",
+          "severity": "CRITICAL",
+          "category": "Insecure Deserialization",
+          "line_range": "25-34",
+          "description": "The 'pickle.loads' function is used to deserialize data from user input, which can lead to deserialization vulnerabilities.",
+          "recommendation": "Use a secure serialization library like pickle or json."
+        },
+        {
+          "id": "SAST-004",
+          "severity": "CRITICAL",
+          "category": "Weak Cryptography / Token Generation",
+          "line_range": "25-34",
+          "description": "The 'SECRET_KEY' variable is hardcoded and should be in an environment variable.",
+          "recommendation": "Use environment variables or a secure hashing library like bcrypt for password storage."
+        },
+        {
+          "id": "SAST-005",
+          "severity": "CRITICAL",
+          "category": "Missing Authentication or Authorization",
+          "line_range": "25-34",
+          "description": "The 'verify_token' function is used to verify user authentication, which can lead to unauthorized access.",
+          "recommendation": "Implement proper authentication mechanisms."
+        },
+        {
+          "id": "SAST-006",
+          "severity": "CRITICAL",
+          "category": "Debug Mode Enabled in Production",
+          "line_range": "25-34",
+          "description": "The 'app.config['DEBUG'] = True' line is commented out, which can lead to security vulnerabilities.",
+          "recommendation": "Enable debug mode only when necessary."
+        },
+        {
+          "id": "SAST-007",
+          "severity": "CRITICAL",
+          "category": "Bare Except Clauses Hiding Errors",
+          "line_range": "25-34",
+          "description": "The 'except' block in the 'delete_user' function is bare excepted, which can lead to errors.",
+          "recommendation": "Implement proper exception handling."
+        },
+        {
+          "id": "SAST-008",
+          "severity": "CRITICAL",
+          "category": "Missing Input Validation",
+          "line_range": "25-34",
+          "description": "The 'request.args.get('payload')' line is used to extract data from the request, which can lead to injection attacks.",
+          "recommendation": "Validate and sanitize user input."
+        },
+        {
+          "id": "SAST-009",
+          "severity": "CRITICAL",
+          "category": "Insecure Network Binding",
+          "line_range": "25-34",
+          "description": "The 'request.args.get('payload')' line is used to extract data from the request, which can lead to injection attacks.",
+          "recommendation": "Use secure network binding mechanisms."
+        }
+      ],
+      "summary": {
+        "total_issues": 12,
+        "critical": 4,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      }
+    },
+    {
+      "file": "database\\db_handler.py",
+      "issues": [
+        {
+          "id": "SAST-PARSE-ERR",
+          "severity": "INFO",
+          "category": "Parse Error",
+          "line_range": "N/A",
+          "description": "LLM response could not be parsed as JSON.",
+          "recommendation": "Review raw output in sast_report.json under raw_responses.",
+          "_raw": "```json\n{\n  \"file\": \"database/db_handler.py\",\n  \"issues\": [\n    {\n      \"id\": \"SAST-001\",\n      \"severity\": \"CRITICAL|HIGH|MEDIUM|LOW|INFO\",\n      \"category\": \"SQL Injection\",\n      \"line_range\": \"23-24\",\n      \"description\": \"Direct string formatting in SQL query, which can lead to injection if user input is not properly sanitized.\",\n      \"recommendation\": \"Use parameterized queries or ORM libraries that handle parameterization automatically.\",\n      \"code\": \"result = execute_query(f'SELECT * "
+        }
+      ],
+      "summary": {
+        "total_issues": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      }
+    },
+    {
+      "file": "utils\\auth.py",
+      "issues": [
+        {
+          "id": "SAST-001",
+          "severity": "CRITICAL|HIGH|MEDIUM|LOW|INFO",
+          "category": "Insecure Deserialization",
+          "line_range": "25-30",
+          "description": "The `base64.b64encode` function is not secure for storing and retrieving sensitive information.",
+          "recommendation": "Use a safer encoding method like `json.dumps` or `pickle.dump` instead of base64.",
+          "code": "In the `generate_token` function, the token is encoded using `base64.b64encode`, which can be easily manipulated by attackers."
+        },
+        {
+          "id": "SAST-002",
+          "severity": "CRITICAL|HIGH|MEDIUM|LOW|INFO",
+          "category": "Insecure Deserialization",
+          "line_range": "35-40",
+          "description": "The `base64.b64decode` function is not secure for retrieving sensitive information.",
+          "recommendation": "Use a safer encoding method like `json.loads` or `pickle.load` instead of base64.",
+          "code": "In the `verify_token` function, the token is decoded using `base64.b64decode`, which can be easily manipulated by attackers."
+        },
+        {
+          "id": "SAST-003",
+          "severity": "CRITICAL|HIGH|MEDIUM|LOW|INFO",
+          "category": "Insecure Deserialization",
+          "line_range": "45-50",
+          "description": "The `base64.b64decode` function is not secure for retrieving sensitive information.",
+          "recommendation": "Use a safer encoding method like `json.loads` or `pickle.load` instead of base64.",
+          "code": "In the `verify_token` function, the token is decoded using `base64.b64decode`, which can be easily manipulated by attackers."
+        },
+        {
+          "id": "SAST-004",
+          "severity": "CRITICAL|HIGH|MEDIUM|LOW|INFO",
+          "category": "Insecure Deserialization",
+          "line_range": "55-60",
+          "description": "The `base64.b64decode` function is not secure for retrieving sensitive information.",
+          "recommendation": "Use a safer encoding method like `json.loads` or `pickle.load` instead of base64.",
+          "code": "In the `verify_token` function, the token is decoded using `base64.b64decode`, which can be easily manipulated by attackers."
+        },
+        {
+          "id": "SAST-005",
+          "severity": "CRITICAL|HIGH|MEDIUM|LOW|INFO",
+          "category": "Insecure Deserialization",
+          "line_range": "65-70",
+          "description": "The `base64.b64decode` function is not secure for retrieving sensitive information.",
+          "recommendation": "Use a safer encoding method like `json.loads` or `pickle.load` instead of base64.",
+          "code": "In the `verify_token` function, the token is decoded using `base64.b64decode`, which can be easily manipulated by attackers."
+        }
+      ],
+      "summary": {
+        "total_issues": 5,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      }
+    }
+  ]
+}
